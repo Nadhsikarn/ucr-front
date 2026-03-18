@@ -1,0 +1,373 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.58163, 13.88751],
+          [100.58156, 13.88752],
+          [100.58143, 13.88750],
+          [100.58122, 13.88744],
+          [100.58116, 13.88742]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-001",
+        "segment_name": "Lak Si 99 - Start",
+        "neighborhood": "หลักสี่ 99 (Lak Si 99)",
+        "start_time": "2026-03-01T09:00:00",
+        "end_time": "2026-03-01T09:08:00",
+        "walkway_width_m": 2.8,
+        "height_width_ratio": 1.2,
+        "sky_view_factor_est": 0.65,
+        "shade_fraction_est": 0.30,
+        "vegetation_canopy_m": 3.5,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "moderate",
+        "avg_heat_index": 34.1,
+        "max_heat_index": 34.5,
+        "img_urls": ["/images/survey/walk-01.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.58116, 13.88742],
+          [100.58098, 13.88720],
+          [100.58085, 13.88700],
+          [100.58075, 13.88676]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-002",
+        "segment_name": "Lak Si 99 - Soi Interior",
+        "neighborhood": "หลักสี่ 99 (Lak Si 99)",
+        "start_time": "2026-03-01T09:08:00",
+        "end_time": "2026-03-01T09:13:00",
+        "walkway_width_m": 1.5,
+        "height_width_ratio": 2.5,
+        "sky_view_factor_est": 0.35,
+        "shade_fraction_est": 0.55,
+        "vegetation_canopy_m": 6.0,
+        "material_ground": "asphalt",
+        "heat_risk_proxy": "moderate",
+        "avg_heat_index": 36.3,
+        "max_heat_index": 38.1,
+        "img_urls": ["/images/survey/walk-04.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.58075, 13.88676],
+          [100.58065, 13.88660],
+          [100.58056, 13.88644],
+          [100.58042, 13.88600],
+          [100.58028, 13.88542]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-003",
+        "segment_name": "Lak Si 99 - South Walk",
+        "neighborhood": "หลักสี่ 99 (Lak Si 99)",
+        "start_time": "2026-03-01T09:13:00",
+        "end_time": "2026-03-01T09:23:00",
+        "walkway_width_m": 3.2,
+        "height_width_ratio": 0.8,
+        "sky_view_factor_est": 0.80,
+        "shade_fraction_est": 0.15,
+        "vegetation_canopy_m": 1.0,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "moderate",
+        "avg_heat_index": 35.6,
+        "max_heat_index": 36.6,
+        "img_urls": ["/images/survey/walk-06.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.58028, 13.88542],
+          [100.57980, 13.88470],
+          [100.57937, 13.88408],
+          [100.57920, 13.88380],
+          [100.57902, 13.88340]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-004",
+        "segment_name": "Lak Si 99 - Canal Side",
+        "neighborhood": "หลักสี่ 99 (Lak Si 99)",
+        "start_time": "2026-03-01T09:23:00",
+        "end_time": "2026-03-01T09:33:00",
+        "walkway_width_m": 2.0,
+        "height_width_ratio": 1.8,
+        "sky_view_factor_est": 0.50,
+        "shade_fraction_est": 0.40,
+        "vegetation_canopy_m": 4.0,
+        "material_ground": "brick_paver",
+        "heat_risk_proxy": "moderate",
+        "avg_heat_index": 35.8,
+        "max_heat_index": 37.3,
+        "img_urls": ["/images/survey/walk-01.jpg", "/images/survey/walk-04.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.57902, 13.88340],
+          [100.57902, 13.88343],
+          [100.57880, 13.88300],
+          [100.57844, 13.88248],
+          [100.57800, 13.88180],
+          [100.57765, 13.88106]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-005",
+        "segment_name": "Transition - Open Road",
+        "neighborhood": "หลักสี่ 99 (Lak Si 99)",
+        "start_time": "2026-03-01T09:33:00",
+        "end_time": "2026-03-01T09:48:00",
+        "walkway_width_m": 4.0,
+        "height_width_ratio": 0.5,
+        "sky_view_factor_est": 0.90,
+        "shade_fraction_est": 0.08,
+        "vegetation_canopy_m": 0.5,
+        "material_ground": "asphalt",
+        "heat_risk_proxy": "moderate",
+        "avg_heat_index": 35.5,
+        "max_heat_index": 37.3,
+        "img_urls": ["/images/survey/walk-02.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.57765, 13.88106],
+          [100.57730, 13.88070],
+          [100.57703, 13.88053],
+          [100.57690, 13.88030],
+          [100.57677, 13.88008],
+          [100.57656, 13.87978]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-006",
+        "segment_name": "แจ้งวัฒนะ 5 - North Entry",
+        "neighborhood": "แจ้งวัฒนะ 5 (Chaengwattana 5)",
+        "start_time": "2026-03-01T09:48:00",
+        "end_time": "2026-03-01T10:03:00",
+        "walkway_width_m": 3.5,
+        "height_width_ratio": 0.6,
+        "sky_view_factor_est": 0.85,
+        "shade_fraction_est": 0.10,
+        "vegetation_canopy_m": 1.5,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "high",
+        "avg_heat_index": 39.8,
+        "max_heat_index": 41.5,
+        "img_urls": ["/images/survey/walk-05.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.57656, 13.87978],
+          [100.57590, 13.87850],
+          [100.57532, 13.87735],
+          [100.57510, 13.87690],
+          [100.57488, 13.87644]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-007",
+        "segment_name": "แจ้งวัฒนะ 5 - Main Walk",
+        "neighborhood": "แจ้งวัฒนะ 5 (Chaengwattana 5)",
+        "start_time": "2026-03-01T10:03:00",
+        "end_time": "2026-03-01T10:17:00",
+        "walkway_width_m": 1.8,
+        "height_width_ratio": 2.2,
+        "sky_view_factor_est": 0.40,
+        "shade_fraction_est": 0.50,
+        "vegetation_canopy_m": 5.0,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "extreme",
+        "avg_heat_index": 44.6,
+        "max_heat_index": 46.5,
+        "img_urls": ["/images/survey/walk-04.jpg", "/images/survey/walk-06.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.57488, 13.87644],
+          [100.57460, 13.87600],
+          [100.57446, 13.87564],
+          [100.57438, 13.87575],
+          [100.57400, 13.87500],
+          [100.57368, 13.87434]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-008",
+        "segment_name": "แจ้งวัฒนะ 5 - Shade Gaps",
+        "neighborhood": "แจ้งวัฒนะ 5 (Chaengwattana 5)",
+        "start_time": "2026-03-01T10:17:00",
+        "end_time": "2026-03-01T10:32:00",
+        "walkway_width_m": 2.5,
+        "height_width_ratio": 1.5,
+        "sky_view_factor_est": 0.55,
+        "shade_fraction_est": 0.35,
+        "vegetation_canopy_m": 3.0,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "extreme",
+        "avg_heat_index": 47.4,
+        "max_heat_index": 48.6,
+        "img_urls": ["/images/survey/walk-03.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.57368, 13.87434],
+          [100.57340, 13.87380],
+          [100.57305, 13.87337],
+          [100.57240, 13.87230],
+          [100.57171, 13.87118],
+          [100.57199, 13.86901]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-009",
+        "segment_name": "แจ้งวัฒนะ 5 - South Section",
+        "neighborhood": "แจ้งวัฒนะ 5 (Chaengwattana 5)",
+        "start_time": "2026-03-01T10:32:00",
+        "end_time": "2026-03-01T10:48:00",
+        "walkway_width_m": 1.2,
+        "height_width_ratio": 3.0,
+        "sky_view_factor_est": 0.25,
+        "shade_fraction_est": 0.65,
+        "vegetation_canopy_m": 7.0,
+        "material_ground": "packed_earth",
+        "heat_risk_proxy": "extreme",
+        "avg_heat_index": 44.5,
+        "max_heat_index": 47.0,
+        "img_urls": ["/images/survey/walk-04.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.57199, 13.86901],
+          [100.57140, 13.86850],
+          [100.57080, 13.86804],
+          [100.57021, 13.86698],
+          [100.56970, 13.86600],
+          [100.56904, 13.86501]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-010",
+        "segment_name": "ชุมชนหลังแฟลต - North Entry",
+        "neighborhood": "ชุมชนหลังแฟลต (Community behind flats)",
+        "start_time": "2026-03-01T10:48:00",
+        "end_time": "2026-03-01T11:03:00",
+        "walkway_width_m": 0.5,
+        "height_width_ratio": 4.5,
+        "sky_view_factor_est": 0.15,
+        "shade_fraction_est": 0.72,
+        "vegetation_canopy_m": 1.0,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "extreme",
+        "avg_heat_index": 43.3,
+        "max_heat_index": 47.0,
+        "img_urls": ["/images/survey/walk-05.jpg", "/images/survey/walk-03.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.56904, 13.86501],
+          [100.56897, 13.86490],
+          [100.56893, 13.86484],
+          [100.56897, 13.86483],
+          [100.56895, 13.86470],
+          [100.56860, 13.86400],
+          [100.56810, 13.86310],
+          [100.56760, 13.86220],
+          [100.56740, 13.86191]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-011",
+        "segment_name": "ชุมชนหลังแฟลต - Interior Lanes",
+        "neighborhood": "ชุมชนหลังแฟลต (Community behind flats)",
+        "start_time": "2026-03-01T11:03:00",
+        "end_time": "2026-03-01T11:46:00",
+        "walkway_width_m": 0.5,
+        "height_width_ratio": 5.0,
+        "sky_view_factor_est": 0.12,
+        "shade_fraction_est": 0.78,
+        "vegetation_canopy_m": 2.0,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "high",
+        "avg_heat_index": 39.1,
+        "max_heat_index": 42.0,
+        "img_urls": ["/images/survey/walk-06.jpg", "/images/survey/walk-01.jpg"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [100.56740, 13.86191],
+          [100.56749, 13.86181],
+          [100.56760, 13.86160],
+          [100.56770, 13.86140],
+          [100.56786, 13.86111]
+        ]
+      },
+      "properties": {
+        "segment_id": "SEG-012",
+        "segment_name": "ชุมชนหลังแฟลต - End",
+        "neighborhood": "ชุมชนหลังแฟลต (Community behind flats)",
+        "start_time": "2026-03-01T11:46:00",
+        "end_time": "2026-03-01T11:54:00",
+        "walkway_width_m": 3.8,
+        "height_width_ratio": 0.7,
+        "sky_view_factor_est": 0.78,
+        "shade_fraction_est": 0.18,
+        "vegetation_canopy_m": 1.8,
+        "material_ground": "concrete",
+        "heat_risk_proxy": "extreme",
+        "avg_heat_index": 43.2,
+        "max_heat_index": 43.5,
+        "img_urls": ["/images/survey/walk-02.jpg", "/images/survey/walk-05.jpg"]
+      }
+    }
+  ]
+}
