@@ -54,15 +54,16 @@ export function CesiumMap({
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const baseTileRef = useRef<L.TileLayer | null>(null)
-  const corridorLayersRef = useRef<Map<string, L.Polyline>>(new Map())
-  const outlineLayersRef = useRef<Map<string, L.Polyline>>(new Map())
+  //เดิมเปน L.Polyline
+  const corridorLayersRef = useRef<Map<string, L.CircleMarker>>(new Map())
+  const outlineLayersRef = useRef<Map<string, L.CircleMarker>>(new Map())
   const canyonMarkersRef = useRef<Map<string, L.LayerGroup>>(new Map())
   const canopyMarkersRef = useRef<Map<string, L.LayerGroup>>(new Map())
   const segmentTooltipsRef = useRef<Map<string, L.Tooltip>>(new Map())
 
   const filteredIds = useMemo(() => {
     return new Set(
-      data.features
+      (data?.features ?? [])
         .filter((f) => {
           const p = f.properties
           return (
@@ -87,21 +88,36 @@ export function CesiumMap({
 
     async function init() {
       const L = (await import("leaflet")).default
-      await import("leaflet/dist/leaflet.css")
+      await import("leaflet/dist/leaflet.css" as any)
 
       if (cancelled || !containerRef.current) return
 
-      const allCoords = data.features.map((f) => f.geometry.coordinates)
-      const bbox = computeBBox(allCoords)
-      const centerLat = (bbox[1] + bbox[3]) / 2
-      const centerLng = (bbox[0] + bbox[2]) / 2
+    /*  const allCoords = data.features.map((f) => f.geometry.coordinates)
+      const bbox = computeBBox(allCoords)  */
 
-      const map = L.map(containerRef.current, {
-        center: [centerLat, centerLng],
-        zoom: 14,
-        zoomControl: true,
-        attributionControl: false,
-      })
+    const allCoords = (data?.features ?? []).flatMap((f) => {
+      const raw = f.geometry.coordinates as unknown[]
+      return typeof raw[0] === "number"
+        ? [(raw as unknown) as number[]]
+        : (raw as number[][])
+    })
+
+    const bbox = allCoords.length > 0
+      ? computeBBox([allCoords])
+      : [100.5018, 13.7563, 100.5018, 13.7563] as [number, number, number, number]
+
+    const centerLat = (bbox[1] + bbox[3]) / 2
+    const centerLng = (bbox[0] + bbox[2]) / 2
+
+    const safeLat = isNaN(centerLat) ? 13.7563 : centerLat
+    const safeLng = isNaN(centerLng) ? 100.5018 : centerLng
+
+    const map = L.map(containerRef.current, {
+      center: [safeLat, safeLng],
+      zoom: 14,
+      zoomControl: true,
+      attributionControl: false,
+    })
 
       // Base tile layer
       const tileUrl = baseMap === "satellite"
@@ -122,177 +138,217 @@ export function CesiumMap({
 
       mapRef.current = map
 
-      // Create segment polylines
-      for (const feature of data.features) {
-        const { segment_id, walkway_width_m, shade_fraction_est, heat_risk_proxy, segment_name, neighborhood } =
-          feature.properties
-        const coords: [number, number][] = feature.geometry.coordinates.map(
-          ([lng, lat]) => [lat, lng]
-        )
+// ── 1. จัดกลุ่ม features ตาม route_id เรียงตาม order_index ──
+const routeGroups = new Map<number, SegmentFeature[]>()
+for (const f of data.features) {
+  const rid = f.properties.route_id
+  if (!routeGroups.has(rid)) routeGroups.set(rid, [])
+  routeGroups.get(rid)!.push(f)
+}
+for (const [, arr] of routeGroups) {
+  arr.sort((a, b) => a.properties.order_index - b.properties.order_index)
+}
 
-        const corridorWidth = clamp(walkway_width_m * 3.5, 6, 18)
-        const alpha = clamp(0.65 + 0.25 * shade_fraction_est, 0.65, 0.92)
-        const riskColor = RISK_COLORS[heat_risk_proxy]
+// ── 2. วาด Corridor Line ──
+for (const [, features] of routeGroups) {
+  const latlngs = features.map((f) => {
+    const c = f.geometry.coordinates as number[]
+    return [c[1], c[0]] as L.LatLngTuple
+  })
+  if (layers.corridor) {
+    L.polyline(latlngs, {
+      color: "#b45309",
+      weight: 5,
+      opacity: 0.85,
+    }).addTo(map)
+  }
+}
 
-        // Dark outline polyline (wider, underneath)
-        const outline = L.polyline(coords, {
-          color: "#1a1a1a",
-          weight: corridorWidth + 4,
-          opacity: 0.35,
-          lineCap: "round",
-          lineJoin: "round",
-          interactive: false,
-        }).addTo(map)
-        outlineLayersRef.current.set(segment_id, outline)
+// ── 3. วาด Markers + Canyon + Canopy ──
+for (const feature of data.features) {
+  const p = feature.properties as any
+  const id = p.segment_id
+  const c = feature.geometry.coordinates as number[]
+  const lat = c[1], lng = c[0]
 
-        // Main corridor polyline
-        const corridor = L.polyline(coords, {
-          color: riskColor,
-          weight: corridorWidth,
-          opacity: alpha,
-          lineCap: "round",
-          lineJoin: "round",
-          interactive: true,
-        }).addTo(map)
+  const riskColor = RISK_COLORS[p.heat_risk_proxy as HeatRisk]
+  //const radius = clamp(p.walkway_width_m * 3, 8, 20) จุดส้มใหญ่
+  const radius = 8
 
-        // Hover tooltip
-        const tooltip = L.tooltip({
-          permanent: false,
-          direction: "top",
-          offset: [0, -8],
-          className: "segment-tooltip",
-        })
-        corridor.bindTooltip(tooltip)
-        corridor.setTooltipContent(
-          `<div style="font-size:11px;line-height:1.4;"><strong>${segment_name || segment_id}</strong><br/>${neighborhood}<br/>Risk: <span style="color:${riskColor};font-weight:600">${heat_risk_proxy}</span> | Width: ${walkway_width_m}m</div>`
-        )
+  // Outline glow
+  const outline = L.circleMarker([lat, lng], {
+    radius: radius + 4,
+    color: "#1a1a1a",
+    fillColor: riskColor,
+    fillOpacity: 0.2,
+    weight: 1, opacity: 0.3,
+    interactive: false,
+  }).addTo(map)
+  outlineLayersRef.current.set(id, outline)
 
-        corridor.on("mouseover", () => {
-          onHoverSegment(segment_id)
-          corridor.setStyle({ weight: corridorWidth + 3, opacity: Math.min(alpha + 0.15, 1) })
-        })
-        corridor.on("mouseout", () => {
-          onHoverSegment(null)
-          corridor.setStyle({ weight: corridorWidth, opacity: alpha })
-        })
-        corridor.on("click", () => {
-          onSelectSegment(segment_id)
-        })
+  // Main dot
+  const corridor = L.circleMarker([lat, lng], {
+    radius,
+    color: "#fff",
+    fillColor: riskColor,
+    fillOpacity: 0.85,
+    weight: 2,
+  }).addTo(map)
 
-        corridorLayersRef.current.set(segment_id, corridor)
+  // Tooltip (เหมือนเดิม)
+// ── Tooltip ย่อ (hover) ──
+corridor.bindTooltip(
+  `<div style="font-size:11px;line-height:1.6;width:180px;">
+    <img src="${p.streetview_image_url}"
+      style="width:100%;height:90px;object-fit:cover;border-radius:4px;margin-bottom:5px;display:block;"
+      onerror="this.src='https://placehold.co/180x90?text=No+Image'"
+    />
+    <strong>${p.neighborhood ?? p.segment_id}</strong><br/>
+    <span style="color:${riskColor};font-weight:600;">● ${p.heat_risk_proxy?.toUpperCase()}</span><br/>
+    Width: <b>${p.walkway_width_m}m</b> &nbsp;|&nbsp; SVF: <b>${p.sky_view_factor}</b><br/>
+    Shade: <b>${Math.round(p.shade_fraction_est * 100)}%</b>
+  </div>`,
+  { permanent: false, direction: "right", offset: [10, 0], opacity: 0.95 }
+)
 
-        // Canyon ribbon: perpendicular bars along route showing street wall depth
-        const svf = feature.properties.sky_view_factor_est
-        const hwRatio = feature.properties.height_width_ratio
-        const canyonAlpha = clamp(1.0 - svf, 0.45, 0.90)
-        const canyonColor = `rgb(${Math.round(200 - svf * 120)},${Math.round(90 - svf * 40)},40)`
+// ── Popup เต็ม (click) ──
+corridor.bindPopup(
+  `<div style="font-size:11px;line-height:1.8;width:260px;max-height:400px;overflow-y:auto;">
+    <img src="${p.streetview_image_url}"
+      style="width:100%;height:120px;object-fit:cover;border-radius:4px;margin-bottom:6px;display:block;"
+      onerror="this.src='https://placehold.co/260x120?text=No+Image'"
+    />
+    <strong style="font-size:13px;">${p.segment_name}</strong><br/>
+    <span style="color:${riskColor};font-weight:600;">● ${p.heat_risk_proxy?.toUpperCase()}</span>
+    <hr style="margin:4px 0;border-top:1px solid #eee;"/>
+    <b style="font-size:10px;color:#555;">URBAN MORPHOLOGY</b><br/>
+    Sky View Factor: <b>${p.sky_view_factor}</b><br/>
+    Walkway Width: <b>${p.walkway_width_m}m</b><br/>
+    Height/Width Ratio: <b>${p.height_width_ratio}</b><br/>
+    <hr style="margin:4px 0;border-top:1px solid #eee;"/>
+    <b style="font-size:10px;color:#555;">VEGETATION</b><br/>
+    Shade Fraction: <b>${Math.round(p.shade_fraction * 100)}%</b><br/>
+    Green View Index: <b>${p.green_view_index}</b><br/>
+    <hr style="margin:4px 0;border-top:1px solid #eee;"/>
+    <b style="font-size:10px;color:#555;">SURFACE & FLOOD</b><br/>
+    Surface: <b>${p.surface_material}</b><br/>
+    Drainage: <b>${p.drainage}</b><br/>
+    <hr style="margin:4px 0;border-top:1px solid #eee;"/>
+    <b style="font-size:10px;color:#555;">HEALTH & LIVABILITY</b><br/>
+    Walkability: <b>${p.walkability}</b><br/>
+    <hr style="margin:4px 0;border-top:1px solid #eee;"/>
+    <b style="font-size:10px;color:#555;">OBSERVED FEATURES</b><br/>
+    <span style="font-size:10px;color:#555;">
+      ${Array.isArray(p.observed_features) ? p.observed_features.join(", ") : ""}
+    </span>
+    <hr style="margin:4px 0;border-top:1px solid #eee;"/>
+    <b style="font-size:10px;color:#555;">SCENE DESCRIPTION</b><br/>
+    <em style="font-size:10px;color:#555;">${p.scene_description ?? ""}</em>
+  </div>`,
+  { maxWidth: 280, autoPan: true }
+)
 
-        const canyonGroup = L.layerGroup()
-        const barSpacing = Math.max(1, Math.floor(coords.length / 5))
-        for (let ci = 0; ci < coords.length; ci += barSpacing) {
-          const [cLat, cLng] = coords[ci]
-          const nextIdx = Math.min(ci + 1, coords.length - 1)
-          const prevIdx = Math.max(ci - 1, 0)
-          const dLat = coords[nextIdx][0] - coords[prevIdx][0]
-          const dLng = coords[nextIdx][1] - coords[prevIdx][1]
-          const len = Math.sqrt(dLat * dLat + dLng * dLng)
-          const perpLat = len > 0 ? -dLng / len : 0
-          const perpLng = len > 0 ? dLat / len : 1
-          const barHalf = clamp(hwRatio * 0.00012, 0.00005, 0.00040)
+  corridor.on("mouseover", () => {
+    onHoverSegment(id)
+    corridor.setStyle({ radius: radius + 3, fillOpacity: 1 })
+  })
+  corridor.on("mouseout", () => {
+    onHoverSegment(null)
+    corridor.setStyle({ radius, fillOpacity: 0.85 })
+  })
+  corridor.on("click", () => {
+    corridor.closeTooltip()
+    onSelectSegment(id)
+  })
+  corridorLayersRef.current.set(id, corridor)
 
-          const barLine = L.polyline(
-            [
-              [cLat + perpLat * barHalf, cLng + perpLng * barHalf],
-              [cLat - perpLat * barHalf, cLng - perpLng * barHalf],
-            ],
-            {
-              color: canyonColor,
-              weight: clamp(hwRatio * 3, 3, 12),
-              opacity: canyonAlpha,
-              lineCap: "butt",
-              interactive: false,
-            }
+// ── Canyon Ribbon ──
+const svf = p.sky_view_factor_est
+const hwRatio = p.height_width_ratio
+const canyonAlpha = clamp(1.0 - svf, 0.45, 0.90)
+const canyonColor = `rgb(${Math.round(200 - svf * 120)},${Math.round(90 - svf * 40)},40)`
+
+const routeFeatures = routeGroups.get(p.route_id) ?? []
+const idx = routeFeatures.findIndex((f) => f.properties.segment_id === id)
+const prev = routeFeatures[idx - 1]
+const next = routeFeatures[idx + 1]
+
+let dLat = 0, dLng = 0
+if (prev && next) {
+  const ca = prev.geometry.coordinates as number[]
+  const cb = next.geometry.coordinates as number[]
+  dLng = cb[0] - ca[0]
+  dLat = cb[1] - ca[1]
+} else if (next) {
+  const c = next.geometry.coordinates as number[]
+  dLng = c[0] - lng
+  dLat = c[1] - lat
+} else if (prev) {
+  const c = prev.geometry.coordinates as number[]
+  dLng = lng - c[0]
+  dLat = lat - c[1]
+}
+
+const len = Math.sqrt(dLat * dLat + dLng * dLng) || 1
+const perpLat = -dLng / len
+const perpLng = dLat / len
+const barHalf = clamp(hwRatio * 0.00012, 0.00005, 0.00040)
+
+const canyonGroup = L.layerGroup()
+L.polyline([
+  [lat + perpLat * barHalf, lng + perpLng * barHalf],
+  [lat - perpLat * barHalf, lng - perpLng * barHalf],
+], {
+  color: canyonColor,
+  weight: clamp(hwRatio * 3, 3, 12),
+  opacity: canyonAlpha,
+  lineCap: "butt",
+  interactive: true,   // ← เปลี่ยนเป็น true
+}).bindTooltip(
+  `<div style="font-size:11px;line-height:1.6;">
+    <strong>Street Canyon</strong><br/>
+    H:W = ${hwRatio} | SVF = ${svf.toFixed(2)}
+  </div>`,
+  { direction: "top", offset: [0, -6] }
+).addTo(canyonGroup)
+
+canyonGroup.addTo(map)
+canyonMarkersRef.current.set(id, canyonGroup)
+
+  // ── Canopy Marker ──
+  const canopyGroup = L.layerGroup()
+  if (p.shade_fraction_est > 0.3) {
+    L.circleMarker([lat, lng], {
+      radius: 6,
+      color: "#16a34a",
+      fillColor: "#bbf7d0",
+      fillOpacity: 0.85,
+      weight: 2,
+      interactive: false,
+    }).bindTooltip(
+      `<div style="font-size:11px;">
+        <b>Canopy/Shade</b><br/>
+        Canopy: ${Math.round(p.vegetation_canopy_m)}m<br/>
+        Shade: ${Math.round(p.shade_fraction_est * 100)}%
+      </div>`,
+      { permanent: false, direction: "top" }
+    ).addTo(canopyGroup)
+  }
+  canopyMarkersRef.current.set(id, canopyGroup)
+}
+
+      const isValidBBox = bbox[0] !== bbox[2] || bbox[1] !== bbox[3]
+      if (isValidBBox) {
+        map.fitBounds(
+          L.latLngBounds(
+            [bbox[1] - 0.002, bbox[0] - 0.002],
+            [bbox[3] + 0.002, bbox[2] + 0.002]
           )
-          canyonGroup.addLayer(barLine)
-        }
-
-        const midIdx = Math.floor(coords.length / 2)
-        const canyonCircle = L.circleMarker(coords[midIdx], {
-          radius: 8,
-          fillColor: canyonColor,
-          fillOpacity: canyonAlpha * 0.7,
-          color: "#222",
-          weight: 1.5,
-          interactive: true,
-        })
-        canyonCircle.bindTooltip(
-          `<div style="font-size:11px;line-height:1.4;padding:2px"><strong>Street Canyon</strong><br/>H:W = ${hwRatio} | SVF = ${svf.toFixed(2)}</div>`,
-          { direction: "top", offset: [0, -10] }
         )
-        canyonGroup.addLayer(canyonCircle)
-        canyonMarkersRef.current.set(segment_id, canyonGroup)
-
-        // Canopy/Shade markers: prominent green circles along route
-        const canopyGroup = L.layerGroup()
-        const canopySize = clamp(feature.properties.vegetation_canopy_m * 2.5, 6, 20)
-        const canopySpacing = Math.max(1, Math.floor(coords.length / 4))
-        for (let ci = 0; ci < coords.length; ci += canopySpacing) {
-          // Outer glow ring
-          const outerCircle = L.circleMarker(coords[ci], {
-            radius: canopySize + 6,
-            fillColor: "#22c55e",
-            fillOpacity: shade_fraction_est * 0.2,
-            color: "#16a34a",
-            weight: 1,
-            opacity: 0.3,
-            interactive: false,
-          })
-          canopyGroup.addLayer(outerCircle)
-          // Core canopy circle
-          const canopyCircle = L.circleMarker(coords[ci], {
-            radius: canopySize,
-            fillColor: "#4ade80",
-            fillOpacity: clamp(shade_fraction_est * 0.8, 0.3, 0.8),
-            color: "#15803d",
-            weight: 2,
-            interactive: false,
-          })
-          canopyGroup.addLayer(canopyCircle)
-          // Inner dot for emphasis
-          const innerDot = L.circleMarker(coords[ci], {
-            radius: Math.max(3, canopySize * 0.35),
-            fillColor: "#15803d",
-            fillOpacity: 0.5,
-            color: "transparent",
-            weight: 0,
-            interactive: false,
-          })
-          canopyGroup.addLayer(innerDot)
-        }
-        // Interactive tooltip at midpoint
-        const canopyTooltipMarker = L.circleMarker(coords[midIdx], {
-          radius: 7,
-          fillColor: "#4ade80",
-          fillOpacity: 0.7,
-          color: "#15803d",
-          weight: 1.5,
-          interactive: true,
-        })
-        canopyTooltipMarker.bindTooltip(
-          `<div style="font-size:11px;line-height:1.4;padding:2px"><strong>Canopy/Shade</strong><br/>Canopy: ${feature.properties.vegetation_canopy_m}m<br/>Shade: ${Math.round(shade_fraction_est * 100)}%</div>`,
-          { direction: "top", offset: [0, -10] }
-        )
-        canopyGroup.addLayer(canopyTooltipMarker)
-        canopyMarkersRef.current.set(segment_id, canopyGroup)
+      } else {
+        // Point เดียว zoom ไปที่จุดนั้นเลย
+        map.setView([bbox[1], bbox[0]], 15)
       }
-
-      // Fit bounds
-      map.fitBounds(
-        L.latLngBounds(
-          [bbox[1] - 0.002, bbox[0] - 0.002],
-          [bbox[3] + 0.002, bbox[2] + 0.002]
-        )
-      )
 
       // Click background to deselect
       map.on("click", () => {
@@ -430,8 +486,22 @@ export function CesiumMap({
   // Reset view
   useEffect(() => {
     if (!mapRef.current || resetViewTrigger === 0) return
-    const allCoords = data.features.map((f) => f.geometry.coordinates)
-    const bbox = computeBBox(allCoords)
+  /*  const allCoords = data.features.map((f) => f.geometry.coordinates)
+    const bbox = computeBBox(allCoords)*/
+
+// ใหม่ — เหมือนกันเลย
+    const allCoords = data.features.flatMap((f) => {
+      const raw = f.geometry.coordinates as unknown[]
+      return Array.isArray(raw[0])
+        ? (raw as number[][])
+        : [(raw as unknown) as number[]]
+      })
+    const bbox = computeBBox([allCoords])
+
+    // หลัง computeBBox
+    const isValidBBox = 
+      bbox[0] !== bbox[2] || bbox[1] !== bbox[3]
+
     mapRef.current.flyToBounds(
       [
         [bbox[1] - 0.002, bbox[0] - 0.002],
@@ -465,6 +535,10 @@ export function CesiumMap({
           <div className="h-2 w-5 rounded bg-muted-foreground/40" />
           <span className="text-muted-foreground">Wide walkway</span>
         </div>
+          <hr className="my-1" />
+        <span className="text-[10px] text-muted-foreground">
+          🖱 คลิกจุดเพื่อดูรายละเอียด
+        </span>
       </div>
       {/* Neighborhood labels */}
       <div className="absolute right-3 top-3 z-[1000] flex flex-col gap-1 rounded-lg border bg-card/95 p-2.5 text-xs backdrop-blur">

@@ -1,11 +1,18 @@
 export type BBox = [minLng: number, minLat: number, maxLng: number, maxLat: number]
 
-export function computeBBox(coordinates: number[][][]): BBox {
+// รับได้ทั้ง LineString (number[][]) และ MultiLineString (number[][][])
+export function computeBBox(coordinates: number[][] | number[][][]): BBox {
   let minLng = Infinity,
     minLat = Infinity,
     maxLng = -Infinity,
     maxLat = -Infinity
-  for (const line of coordinates) {
+  // normalize ให้เป็น number[][][] เสมอ
+  const lines: number[][][] =
+    Array.isArray(coordinates[0][0])
+      ? (coordinates as number[][][])
+      : [(coordinates as number[][])]
+
+  for (const line of lines) {
     for (const [lng, lat] of line) {
       if (lng < minLng) minLng = lng
       if (lng > maxLng) maxLng = lng
@@ -16,11 +23,17 @@ export function computeBBox(coordinates: number[][][]): BBox {
   return [minLng, minLat, maxLng, maxLat]
 }
 
-export function computeCentroid(coordinates: number[][][]): [number, number] {
+export function computeCentroid(coordinates: number[][] | number[][][]): [number, number] {
   let sumLng = 0,
     sumLat = 0,
     count = 0
-  for (const line of coordinates) {
+
+  const lines: number[][][] =
+    Array.isArray(coordinates[0][0])
+      ? (coordinates as number[][][])
+      : [(coordinates as number[][])]
+
+  for (const line of lines) {
     for (const [lng, lat] of line) {
       sumLng += lng
       sumLat += lat

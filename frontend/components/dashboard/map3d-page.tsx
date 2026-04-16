@@ -38,9 +38,11 @@ function median(arr: number[]): number {
 
 export function Map3DPage() {
   const { data, isLoading, error } = useSWR<SegmentsGeoJSON>(
-    "/data/segments.geojson",
+   // ของเก่า "/data/segments.geojson",
+    "/api/street-analyses",
     fetcher
   )
+console.log("data:", data) 
 
   const [layers, setLayers] = useState({
     corridor: true,
@@ -83,7 +85,7 @@ export function Map3DPage() {
 
   // KPI computations
   const kpis = useMemo(() => {
-    if (!data) return null
+    if (!data || !data.features || data.features.length === 0) return null
     const features = data.features
     const widths = features.map((f) => f.properties.walkway_width_m)
     const shades = features.map((f) => f.properties.shade_fraction_est)
@@ -136,7 +138,7 @@ export function Map3DPage() {
           Survey Walk Map
         </h2>
         <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Heat and walkability analysis across {data.features.length} segments in northern Bangkok (March 1, 2026).
+          Heat and walkability analysis across {data.features?.length ?? 0} segments in northern Bangkok (March 1, 2026).
           Corridors follow actual streets. Click segments for details. Toggle layers and filters in the control panel.
         </p>
       </div>
@@ -171,6 +173,7 @@ export function Map3DPage() {
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* Cesium Viewer */}
         <div className="min-h-[400px] flex-1 overflow-hidden rounded-lg border lg:min-h-[600px]">
+        {/* ทำให้แผนที่กว้างถึงด้านล่าง <div className="h-[600px] flex-1 overflow-hidden rounded-lg border"> */}
           <CesiumMap
             data={data}
             layers={layers}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import {
   Card,
   CardContent,
@@ -16,7 +16,9 @@ import {
   MessageSquare,
   Camera,
 } from "lucide-react"
-import { mapLayers, mapPoints, type MapLayer, type MapPoint } from "@/lib/mock-data"
+
+// ลบ mapLayers, mapPoints ออกจาก import
+import { type MapLayer, type MapPoint } from "@/lib/mock-data"
 import { BangkokMap } from "./bangkok-map"
 
 const typeIcons = {
@@ -32,14 +34,66 @@ const typeColors = {
 }
 
 export function MapLayersPage() {
-  const [layers, setLayers] = useState<MapLayer[]>(mapLayers)
+  const [layers, setLayers] = useState<MapLayer[]>([])
+  const [points, setPoints] = useState<MapPoint[]>([])
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null)
 
+  // ดึง layers จาก DB
+  useEffect(() => {
+    fetch("/api/map-layers")
+      .then((r) => r.json())
+      .then(setLayers)
+  }, [])
+
+  // เพิ่มตรงนี้ ↓
   function toggleLayer(id: string) {
     setLayers((prev) =>
       prev.map((l) => (l.id === id ? { ...l, enabled: !l.enabled } : l))
     )
   }
+
+// ดึง points จาก GeoServer ของเก่าพิม
+/*useEffect(() => {
+  fetch("/api/map-points")
+    .then((r) => r.json())
+    .then((geojson) => {
+      if (!geojson.features) return  // เพิ่มบรรทัดนี้
+      const pts: MapPoint[] = geojson.features.map((f: any) => ({
+        id: f.properties.point_key,
+        lat: f.geometry.coordinates[1],  // ใช้จาก geometry แทน
+        lng: f.geometry.coordinates[0],  // ใช้จาก geometry แทน
+        type: f.properties.type,
+        label: f.properties.label,
+        value: f.properties.value,
+        zone: f.properties.zone_id,
+        date: f.properties.recorded_date,
+        isCluster: f.properties.is_cluster === true || f.properties.is_cluster === "true",
+      }))
+      setPoints(pts)
+    })
+}, [])
+*/
+
+//ของใหม่ที่จะเชื่อมกับไอเบน
+useEffect(() => {
+  fetch("/api/map-points")
+    .then((r) => r.json())
+    .then((geojson) => {
+      if (!geojson.features) return
+      const pts: MapPoint[] = geojson.features.map((f: any) => ({
+        id: f.id,
+        lat: f.geometry.coordinates[1],
+        lng: f.geometry.coordinates[0],
+        type: "image" as const,                          // ← เพื่อนส่งมาแต่ image type
+        label: f.properties.address || f.id,
+        value: `Sky View: ${f.properties.urban_morphology?.sky_view_factor ?? "-"}`,
+        zone: "-",
+        date: f.properties.created_at?.split("T")[0],   // ← ตัด time ออก เอาแค่วันที่
+        isCluster: false,
+      }))
+      setPoints(pts)
+    })
+}, [])
 
   const handleSelectPoint = useCallback((point: MapPoint) => {
     setSelectedPoint(point)
@@ -138,7 +192,8 @@ export function MapLayersPage() {
             <div className="h-full min-h-[400px] overflow-hidden rounded-xl lg:min-h-[556px]">
               <BangkokMap
                 layers={layers}
-                points={mapPoints}
+                // เดิม points={mapPoints}
+                points={points}
                 onSelectPoint={handleSelectPoint}
                 selectedPoint={selectedPoint}
               />

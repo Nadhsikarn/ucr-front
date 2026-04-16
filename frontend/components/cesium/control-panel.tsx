@@ -45,6 +45,9 @@ export function ControlPanel({
   data,
   selectedSegmentId,
 }: ControlPanelProps) {
+
+  console.log("widthRange:", filters.widthRange)
+  
   const exportSelectedJSON = () => {
     if (!selectedSegmentId) return
     const feature = data.features.find(

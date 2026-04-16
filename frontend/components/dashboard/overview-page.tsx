@@ -1,5 +1,5 @@
 "use client"
-
+import { useState, useEffect } from "react"
 import {
   Card,
   CardContent,
@@ -21,8 +21,8 @@ import {
   TrendingUp,
   ArrowUpRight,
 } from "lucide-react"
-import { surveyStats, climateSignals, communityInputs, climateEvents } from "@/lib/mock-data"
-
+//เดิม import { surveyStats, climateSignals, communityInputs, climateEvents } from "@/lib/mock-data"
+//แก้ละลบ import { type ClimateEvent } from "@/lib/mock-data"
 function StatItem({
   icon: Icon,
   label,
@@ -51,7 +51,23 @@ function StatItem({
 }
 
 export function OverviewPage() {
-  const recentEvents = climateEvents.slice(0, 3)
+  const [surveyStats, setSurveyStats] = useState<any>(null)
+  const [climateSignals, setClimateSignals] = useState<any>(null)
+  const [communityInputs, setCommunityInputs] = useState<any>(null)
+  const [recentEvents, setRecentEvents] = useState<any[]>([])
+
+  useEffect(() => {
+    fetch("/api/overview")
+      .then((r) => r.json())
+      .then((data) => {
+        setSurveyStats(data.surveyStats)
+        setClimateSignals(data.climateSignals)
+        setCommunityInputs(data.communityInputs)
+        setRecentEvents(data.climateEvents)
+      })
+  }, [])
+
+  if (!surveyStats || !climateSignals || !communityInputs) return null
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,12 +99,12 @@ export function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
-              <StatItem icon={Users} label="Households Surveyed" value={surveyStats.totalHouseholds.toLocaleString()} />
-              <StatItem icon={MapPin} label="Administrative Zones" value={surveyStats.zonesCount} />
-              <StatItem icon={Layers} label="Variables Tracked" value={surveyStats.variablesTracked} />
+              <StatItem icon={Users} label="Households Surveyed" value={surveyStats.total_households.toLocaleString()} />
+              <StatItem icon={MapPin} label="Administrative Zones" value={surveyStats.zones_count} />
+              <StatItem icon={Layers} label="Variables Tracked" value={surveyStats.variables_tracked} />
               <div className="mt-1 border-t pt-3">
                 <p className="text-xs text-muted-foreground">
-                  Last updated: {surveyStats.lastUpdated}
+                  Last updated: {surveyStats.last_updated}
                 </p>
               </div>
             </div>
@@ -110,9 +126,9 @@ export function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
-              <StatItem icon={Thermometer} label="Heat Alerts (30d)" value={climateSignals.heatAlerts} />
-              <StatItem icon={Droplets} label="Heavy Rainfall Events" value={climateSignals.heavyRainfallEvents} />
-              <StatItem icon={Thermometer} label="Avg. Temperature" value={climateSignals.avgTemperature} unit="C" />
+              <StatItem icon={Thermometer} label="Heat Alerts (30d)" value={climateSignals.heat_alerts} />
+              <StatItem icon={Droplets} label="Heavy Rainfall Events" value={climateSignals.heavy_rainfall_events} />
+              <StatItem icon={Thermometer} label="Avg. Temperature" value={climateSignals.avg_temperature} unit="C" />
               <div className="mt-1 border-t pt-3">
                 <div className="flex items-center gap-1 text-xs text-accent">
                   <TrendingUp className="size-3" />
@@ -138,12 +154,12 @@ export function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
-              <StatItem icon={MessageSquare} label="Chatbot Reports" value={communityInputs.chatbotReports.toLocaleString()} />
-              <StatItem icon={Cpu} label="Sensor Points" value={communityInputs.sensorPoints} />
-              <StatItem icon={Camera} label="Street-level Images" value={communityInputs.streetImages} />
+              <StatItem icon={MessageSquare} label="Chatbot Reports" value={communityInputs.chatbot_reports.toLocaleString()} />
+              <StatItem icon={Cpu} label="Sensor Points" value={communityInputs.sensor_points} />
+              <StatItem icon={Camera} label="Street-level Images" value={communityInputs.street_images} />
               <div className="mt-1 border-t pt-3">
                 <p className="text-xs text-muted-foreground">
-                  {communityInputs.activeContributors} active contributors
+                  {communityInputs.active_contributors} active contributors
                 </p>
               </div>
             </div>
@@ -174,7 +190,7 @@ export function OverviewPage() {
                     )}
                     {event.type === "heat" ? "Heat" : "Rain"}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">{event.date}</span>
+                  <span className="text-xs text-muted-foreground">{new Date(event.event_date).toISOString().split("T")[0]}</span>
                 </div>
                 <h4 className="text-sm font-medium text-foreground">{event.title}</h4>
                 <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">
@@ -194,7 +210,7 @@ export function OverviewPage() {
                 </div>
                 <div className="flex items-center gap-1 text-xs text-primary">
                   <ArrowUpRight className="size-3" />
-                  <span>{event.chatbotResponses} chatbot responses</span>
+                  <span>{event.chatbot_responses} chatbot responses</span>
                 </div>
               </CardContent>
             </Card>
